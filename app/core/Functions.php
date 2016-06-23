@@ -5,6 +5,22 @@
  * @copyright   Copyright (c) 2016 OA Wu Design
  */
 
+if (!function_exists ('mkdir777')) {
+  function mkdir777 ($path) {
+    $oldmask = umask (0);
+    @mkdir ($path, 0777, true);
+    umask ($oldmask);
+    return true;
+  }
+}
+if (!function_exists ('convert_size')) {
+  function convert_size () {
+    $size = memory_get_usage ();
+    $unit = array ('B','KB','MB','GB','TB','PB');
+    return @round ($size / pow (1024, ($i = floor (log ($size, 1024)))), 2) . ' ' . $unit[$i];
+  }
+}
+
 if (!function_exists ('array_2d_to_1d')) {
   function array_2d_to_1d ($array) {
     $messages = array ();
@@ -14,7 +30,6 @@ if (!function_exists ('array_2d_to_1d')) {
     return $messages;
   }
 }
-
 if (!function_exists ('column_array')) {
   function column_array ($objects, $key) {
     return array_map (function ($object) use ($key) {
@@ -32,8 +47,8 @@ if (!function_exists ('read_file')) {
     $data = '';
     flock ($fp, LOCK_SH);
     if (filesize ($file) > 0) $data =& fread ($fp, filesize ($file));
-    flock($fp, LOCK_UN);
-    fclose($fp);
+    flock ($fp, LOCK_UN);
+    fclose ($fp);
 
     return $data;
   }
@@ -85,7 +100,7 @@ if (!function_exists ('oasort')) {
 if (!function_exists ('base_url')) {
   function base_url () {
     $uri = array_filter (func_get_args ());
-    return '/' . (defined('ENV') ? '' : 'controllers/') . implode ('/', $uri);
+    return '/' . implode ('/', $uri);
   }
 }
 if (!function_exists ('img_url')) {
@@ -108,7 +123,7 @@ if (!function_exists ('remove_ckedit_tag')) {
 }
 if (!function_exists ('merge_js_css')) {
   function merge_js_css ($js_list, $css_list) {
-    if (!defined ('ENV')) {
+    if (!defined ('BUILD')) {
       $js_list = array_map (function ($t) { return $t['url']; }, $js_list);
       $css_list = array_map (function ($t) { return $t['url']; }, $css_list);
     } else {

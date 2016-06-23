@@ -7,9 +7,16 @@ cmd/node_modules/*
 cmd/.sass-cache/*
 cmd/npm-debug.log
 
+/caches/*
+/upload/*
+/temp/*
+/sitemap/*
+/logs/*
+/assets/css/*
+/assets/js/*
+
+
+app/core/config.php
+
 /*.html
 /robots.txt
-/assets/css/*
-/sitemap/*
-/assets/js/*
-/cmd/configs/s3_key.php

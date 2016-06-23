@@ -19,8 +19,6 @@ class S3 {
   private static $__secret_key = NULL;
 
   public static function init ($access_key, $secret_key) {
-    // if (!(isset ($key['access_key']) && isset ($key['secret_key'])))
-      // return trigger_error (sprintf ("S3::init(): [%s] %s", 999, 'No access_key, secret_key'), E_USER_WARNING);
     self::$__access_key = $access_key;
     self::$__secret_key = $secret_key;
   }
@@ -140,7 +138,7 @@ class S3 {
   public static function fileMD5 ($filePath) {
     return base64_encode (md5_file ($filePath, true));
   }
-  public static function putFile ($filePath, $bucket, $s3Path, $acl = self::ACL_PUBLIC_READ, $metaHeaders = array (), $requestHeaders = array ()) {
+  public static function putObject ($filePath, $bucket, $s3Path, $acl = self::ACL_PUBLIC_READ, $metaHeaders = array (), $requestHeaders = array ()) {
     if (!(file_exists ($filePath) && is_file ($filePath) && is_readable ($filePath)))
       return trigger_error ('S3::putFile(): Unable to open input file: ' . $filePath, E_USER_WARNING);
 
@@ -169,22 +167,6 @@ class S3 {
   }
 
   public static function __getMimeType (&$file) {
-    // $type = false;
-
-    // if (extension_loaded ('fileinfo') && isset ($_ENV['MAGIC']) && ($finfo = finfo_open (FILEINFO_MIME, $_ENV['MAGIC'])) !== false) {
-    //   if (($type = finfo_file ($finfo, $file)) !== false) {
-    //     $type = explode (' ', str_replace ('; charset=', ';charset=', $type));
-    //     $type = array_pop ($type);
-    //     $type = explode (';', $type);
-    //     $type = trim (array_shift ($type));
-    //   }
-    //   finfo_close ($finfo);
-    // } elseif (function_exists ('mime_content_type'))
-    //   $type = trim (mime_content_type ($file));
-
-    // if (($type !== false) && (strlen ($type) > 0))
-    //   return $type;
-
     return ($extension = self::getMimeByExtension ($file)) ? $extension : 'text/plain';//'application/octet-stream';
   }
 
@@ -222,11 +204,8 @@ class S3 {
     $rest = new S3Request ('PUT', $bucket, $uri);
     $rest->setHeader ('Content-Length', 0);
 
-    foreach ($requestHeaders as $h => $v)
-      $rest->setHeader ($h, $v);
-
-    foreach ($metaHeaders as $h => $v)
-      $rest->setAmzHeader ('x-amz-meta-' . $h, $v);
+    foreach ($requestHeaders as $h => $v) $rest->setHeader ($h, $v);
+    foreach ($metaHeaders as $h => $v) $rest->setAmzHeader ('x-amz-meta-' . $h, $v);
 
     $rest->setAmzHeader ('x-amz-acl', $acl)
          ->setAmzHeader ('x-amz-copy-source', sprintf ('/%s/%s', $srcBucket, $srcUri));

@@ -5,9 +5,6 @@
  * @copyright   Copyright (c) 2016 OA Wu Design
  */
 
-include_once 'defines.php';
-include_once 'functions.php';
-
 Class Controller {
   // protected
   private $file = null;
@@ -17,11 +14,14 @@ Class Controller {
   private $metas = array ();
   private $json_ld = array ();
   private $frame = '';
+  private $start_time;
+  private $end_time;
 
   public function __construct ($frame = '_frame') {
     if (!(($trace = debug_backtrace (DEBUG_BACKTRACE_PROVIDE_OBJECT)) && isset ($trace[1]['file']) && ($this->file = pathinfo (pathinfo ($trace[1]['file'], PATHINFO_BASENAME), PATHINFO_FILENAME))))
       exit ('debug_backtrace error!');
-
+    
+    $this->start_time = microtime (true);
     $this->frame = file_exists (VIEW . ($frame = trim ($frame, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR) . CONTENT_NAME . EXT) ? $frame : '';
          
     $this->add_meta (array ('http-equiv' => 'Content-Language', 'content' => 'zh-tw'))
@@ -62,7 +62,16 @@ Class Controller {
     $this->vars[$key] = $value;
     return $this;
   }
+  
+  public function run ($setting) {
+    $return = $setting ($this);
+    $this->end_time = microtime (true);
 
+    return is_array ($return) ? array_merge (array (
+        'runtime' => round ($this->end_time - $this->start_time, 4),
+        'memory' => convert_size ()
+      ), $return) : $return;
+  }
   public function view ($setting) {
     if (!file_exists ($view_path = VIEW . $this->file . DIRECTORY_SEPARATOR . CONTENT_NAME . EXT))
       exit ('No view file');
@@ -89,6 +98,7 @@ Class Controller {
     $return = $this->add ('_f_content', $return)
                    ->load_view (VIEW . $this->frame . CONTENT_NAME . EXT, $this->vars);
 
+    $this->end_time = microtime (true);
     return $return;
   }
   private function load_view ($__o__p__ = '', $__o__d__ = array ()) {
@@ -101,6 +111,18 @@ Class Controller {
     $buffer = ob_get_contents ();
     @ob_end_clean ();
 
-    return preg_replace ('/{<{<{([\n| ])/i', '<?php$1', $buffer);
+    return $buffer;
   }
 }
+
+function load_model ($class) {
+  if (class_exists ($class)) return false;
+
+  if ($class == 'Model')
+    if (is_readable ($file = CORE . 'Model' . EXT)) include_once $file;
+    else return false;
+  else 
+    if (is_readable ($file = MODEL . $class . EXT)) include_once $file; 
+    else return false;
+}
+spl_autoload_register ('load_model');
